@@ -11,6 +11,7 @@ from textual.worker import Worker
 from media_essentials_library.config import load_config
 from media_essentials_library.features.missing_episodes import scan_library_for_missing_episodes
 from media_essentials_library.formatting import format_date
+from media_essentials_library.i18n import t
 from media_essentials_library.models.missing_episodes import ShowMissingEpisodes
 from media_essentials_library.models.plex import PlexShow
 from media_essentials_library.services.plex import get_tv_show_libraries
@@ -109,53 +110,79 @@ class MissingEpisodesScreen(Screen[None]):
     """
 
     def compose(self) -> ComposeResult:
-        status_message = "Ready"
+        config = load_config()
+        self.language = config.language
+        self.date_format = config.date_format
+        status_message = t("status.ready", self.language)
         try:
             libraries = get_tv_show_libraries()
         except Exception as error:
             libraries = []
-            status_message = f"Could not load Plex libraries: {error}"
+            status_message = t("missing.load_libraries_error", self.language, error=error)
 
         yield Header()
-        yield StatusBar(status_message)
+        yield StatusBar(status_message, language=self.language)
         with Vertical(id="missing-episodes-content"):
-            yield Label("Missing Episodes Finder", id="missing-episodes-title")
+            yield Label(t("missing.title", self.language), id="missing-episodes-title")
             with Grid(id="library-selection-row"):
                 yield Static()
                 with Vertical(id="library-selection"):
-                    yield Label("Library")
+                    yield Label(t("missing.library", self.language))
                     yield Select(
                         [(library.title, library.key) for library in libraries],
-                        prompt="Select a library",
+                        prompt=t("missing.select_library", self.language),
                         id="library-select",
                         disabled=not libraries,
                     )
                     with Grid(id="missing-episodes-actions"):
-                        yield Button("Scan", id="scan-library", disabled=not libraries)
-                        yield Button("Back", id="selection-back")
+                        yield Button(
+                            t("action.scan", self.language),
+                            id="scan-library",
+                            disabled=not libraries,
+                        )
+                        yield Button(t("action.back", self.language), id="selection-back")
                 yield Static()
             with Vertical(id="scan-loading"):
                 yield LoadingIndicator()
-                yield Label("Preparing scan...", id="scan-loading-message")
+                yield Label(t("missing.prepare_scan", self.language), id="scan-loading-message")
             with Vertical(id="scan-results"):
                 with Vertical(classes="table-section"):
-                    yield Label("Shows", id="shows-title", classes="table-title")
+                    yield Label(
+                        t("missing.shows", self.language),
+                        id="shows-title",
+                        classes="table-title",
+                    )
                     shows_table = DataTable(id="shows-table", zebra_stripes=True, cursor_type="row")
-                    shows_table.add_columns("Title", "Year", "Seasons", "Episodes")
+                    shows_table.add_columns(
+                        t("table.title", self.language),
+                        t("missing.year", self.language),
+                        t("missing.seasons", self.language),
+                        t("table.episodes", self.language),
+                    )
                     yield shows_table
                 with Vertical(classes="table-section"):
-                    yield Label("Episodes", id="episodes-title", classes="table-title")
+                    yield Label(
+                        t("missing.episodes", self.language),
+                        id="episodes-title",
+                        classes="table-title",
+                    )
                     episodes_table = DataTable(id="episodes-table", zebra_stripes=True)
-                    episodes_table.add_columns("Season", "Episode", "Title", "Airdate", "Status")
+                    episodes_table.add_columns(
+                        t("missing.season", self.language),
+                        t("missing.episode", self.language),
+                        t("table.title", self.language),
+                        t("missing.airdate", self.language),
+                        t("missing.status", self.language),
+                    )
                     yield episodes_table
 
     def __init__(self) -> None:
         super().__init__()
         self.results_by_show_key: dict[str, ShowMissingEpisodes] = {}
         self.date_format = "iso"
+        self.language = "en"
 
     def on_mount(self) -> None:
-        self.date_format = load_config().date_format
         self.query_one("#scan-loading").display = False
         self.query_one("#scan-results").display = False
 
@@ -190,7 +217,7 @@ class MissingEpisodesScreen(Screen[None]):
         status_bar = self.query_one(StatusBar)
 
         if selected_library == Select.NULL:
-            status_bar.set_message("Select a library before scanning.")
+            status_bar.set_message(t("missing.select_library_before_scan", self.language))
             return
 
         table = self.query_one("#shows-table", DataTable)
@@ -202,8 +229,12 @@ class MissingEpisodesScreen(Screen[None]):
         scan_button.disabled = True
         self.query_one("#scan-results").display = False
         self.query_one("#scan-loading").display = True
-        self.query_one("#scan-loading-message", Label).update("Preparing scan...")
-        status_bar.set_message(f"Scanning library: {selected_library}")
+        self.query_one("#scan-loading-message", Label).update(
+            t("missing.prepare_scan", self.language)
+        )
+        status_bar.set_message(
+            t("missing.scanning_library", self.language, library=selected_library)
+        )
         self.refresh(layout=True)
 
         self.scan_library_worker(str(selected_library))
@@ -225,7 +256,9 @@ class MissingEpisodesScreen(Screen[None]):
 
         if event.worker.error is not None:
             logger.exception("Missing episodes scan failed", exc_info=event.worker.error)
-            self.query_one(StatusBar).set_message(f"Could not scan library: {event.worker.error}")
+            self.query_one(StatusBar).set_message(
+                t("missing.scan_error", self.language, error=event.worker.error)
+            )
             return
 
         self.render_scan_results(event.worker.result)
@@ -245,7 +278,7 @@ class MissingEpisodesScreen(Screen[None]):
 
         self.query_one("#scan-results").display = True
         self.query_one(StatusBar).set_message(
-            f"Scan complete. Found {table.row_count} shows with missing episodes."
+            t("missing.scan_complete", self.language, count=table.row_count)
         )
 
     def update_scan_progress_from_thread(
@@ -263,8 +296,14 @@ class MissingEpisodesScreen(Screen[None]):
 
     def update_scan_progress(self, scanned_count: int, total_shows: int, show_title: str) -> None:
         message = (
-            f"Scanned {scanned_count} of {total_shows} shows. "
-            f"Currently scanning: {show_title}"
+            t(
+                "missing.scanned_progress",
+                self.language,
+                scanned_count=scanned_count,
+                total_shows=total_shows,
+            )
+            + " "
+            + t("missing.currently_scanning", self.language, show_title=show_title)
         )
         self.query_one("#scan-loading-message", Label).update(message)
         self.query_one(StatusBar).set_message(message)
@@ -273,16 +312,16 @@ class MissingEpisodesScreen(Screen[None]):
         status_bar = self.query_one(StatusBar)
         result = self.results_by_show_key.get(show_key)
         if result is None:
-            status_bar.set_message("Could not determine selected show.")
+            status_bar.set_message(t("missing.no_selected_show", self.language))
             return
 
         table = self.query_one("#episodes-table", DataTable)
         table.clear()
         for episode in result.missing_episodes:
             status = (
-                Text("Unaired", style="yellow")
+                Text(t("missing.unaired", self.language), style="yellow")
                 if episode.is_unaired
-                else Text("Missing", style="red")
+                else Text(t("missing.missing", self.language), style="red")
             )
             table.add_row(
                 "" if episode.season_number is None else str(episode.season_number),
@@ -294,5 +333,10 @@ class MissingEpisodesScreen(Screen[None]):
             )
 
         status_bar.set_message(
-            f"Found {len(result.missing_episodes)} missing episodes for {result.show.title}."
+            t(
+                "missing.found_for_show",
+                self.language,
+                count=len(result.missing_episodes),
+                show_title=result.show.title,
+            )
         )

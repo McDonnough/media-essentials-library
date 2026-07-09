@@ -6,6 +6,8 @@ from textual.containers import Grid, Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Header, Label, Static
 
+from media_essentials_library.config import load_config
+from media_essentials_library.i18n import t
 from media_essentials_library.screens.config import ConfigScreen
 from media_essentials_library.screens.missing_episodes import MissingEpisodesScreen
 from media_essentials_library.widgets.status_bar import StatusBar
@@ -30,6 +32,10 @@ class StartScreen(Screen[None]):
     """
     The start screen of the app, which displays the logo and offers a range of tools to be used.
     """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.language = load_config().language
 
     CSS = """
     StartScreen {
@@ -69,21 +75,53 @@ class StartScreen(Screen[None]):
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield StatusBar()
+        yield StatusBar(language=self.language)
         with Vertical(id="start-content"):
             yield Static(load_logo(), id="logo")
             yield Label(
-                "Welcome to Media Essentials Library! Please select a tool to get started.",
+                t("start.welcome", self.language),
                 id="welcome-message",
             )
             with Grid(id="tools"):
-                yield Button("Missing Episode Finder", id="missing-episode-finder")
-                yield Button("Tool 2", classes="inactive", disabled=True)
-                yield Button("Tool 3", classes="inactive", disabled=True)
-                yield Button("Settings", id="settings")
+                yield Button(
+                    t("start.missing_episode_finder", self.language),
+                    id="missing-episode-finder",
+                )
+                yield Button(
+                    t("start.tool_2", self.language),
+                    id="tool-2",
+                    classes="inactive",
+                    disabled=True,
+                )
+                yield Button(
+                    t("start.tool_3", self.language),
+                    id="tool-3",
+                    classes="inactive",
+                    disabled=True,
+                )
+                yield Button(t("start.settings", self.language), id="settings")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "settings":
-            self.app.push_screen(ConfigScreen())
+            self.app.push_screen(ConfigScreen(), self.apply_selected_language)
         elif event.button.id == "missing-episode-finder":
             self.app.push_screen(MissingEpisodesScreen())
+
+    def apply_selected_language(self, language: str | None) -> None:
+        if language is None or language == self.language:
+            return
+
+        self.apply_language(language)
+
+    def apply_language(self, language: str) -> None:
+        self.language = language
+        self.app.sub_title = t("app.subtitle", language)
+        self.query_one(StatusBar).set_message(t("status.ready", language))
+        self.query_one("#welcome-message", Label).update(t("start.welcome", language))
+        self.query_one("#missing-episode-finder", Button).label = t(
+            "start.missing_episode_finder",
+            language,
+        )
+        self.query_one("#tool-2", Button).label = t("start.tool_2", language)
+        self.query_one("#tool-3", Button).label = t("start.tool_3", language)
+        self.query_one("#settings", Button).label = t("start.settings", language)
