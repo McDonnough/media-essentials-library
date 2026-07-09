@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "media-essentials-library"
+version = "0.1.0"
+description = "A terminal UI for media library administration tasks."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "McDonnough" }]
+dependencies = [
+    "keyring>=25",
+    "platformdirs>=4.3",
+    "plexapi @ git+https://github.com/pushingkarmaorg/python-plexapi.git",
+    "textual>=0.85",
+    "tzdata>=2025.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pyinstaller>=6.10",
+    "pytest>=8.3",
+    "ruff>=0.7",
+]
+
+[project.scripts]
+media-essentials-library = "media_essentials_library.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+media_essentials_library = ["assets/*.txt"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
