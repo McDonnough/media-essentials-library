@@ -80,6 +80,19 @@ jobs:
           path: ${{ env.RELEASE_ASSET }}
           if-no-files-found: error
 
+      - name: Generate release notes
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api `
+            --method POST `
+            "repos/${{ github.repository }}/releases/generate-notes" `
+            -f tag_name="$env:RELEASE_TAG" `
+            -f target_commitish="${{ github.sha }}" `
+            -f release_name="$env:RELEASE_TITLE" `
+            --jq ".body" > release-notes.md
+
       - name: Create GitHub release
         shell: pwsh
         env:
@@ -89,4 +102,4 @@ jobs:
             "$env:RELEASE_ASSET" `
             --target "${{ github.sha }}" `
             --title "$env:RELEASE_TITLE" `
-            --notes "Automated Windows build for $env:RELEASE_TAG from commit ${{ github.sha }}."
+            --notes-file release-notes.md
