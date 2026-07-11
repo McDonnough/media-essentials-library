@@ -32,6 +32,7 @@ def load_config(config_dir: Path | None = None) -> PlexServerConfig:
         server_url=str(data.get("server_url", "")),
         token=_load_plex_token_or_empty() or str(data.get("token", "")),
         date_format=str(data.get("date_format", PlexServerConfig.date_format)),
+        language=str(data.get("language", PlexServerConfig.language)),
     )
 
 
@@ -45,6 +46,7 @@ def save_config(config: PlexServerConfig, config_dir: Path | None = None) -> Pat
             {
                 "server_url": config.server_url,
                 "date_format": config.date_format,
+                "language": config.language,
             },
             config_file,
             indent=2,
