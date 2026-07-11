@@ -12,6 +12,7 @@ authors = [{ name = "McDonnough" }]
 dependencies = [
     "keyring>=25",
     "platformdirs>=4.3",
+    # Uses a GitHub fork for now. Prefer a PyPI release or a pinned commit/tag before broad release.
     "plexapi @ git+https://github.com/pushingkarmaorg/python-plexapi.git",
     "textual>=0.85",
     "tzdata>=2025.2",
@@ -39,3 +40,6 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
