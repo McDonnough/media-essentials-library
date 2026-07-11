@@ -12,7 +12,11 @@ datas = [
     (
         str(src_path / "media_essentials_library" / "assets" / "logo.txt"),
         "media_essentials_library/assets",
-    )
+    ),
+    (
+        str(src_path / "media_essentials_library" / "locales"),
+        "media_essentials_library/locales",
+    ),
 ]
 hiddenimports = collect_submodules("keyring.backends")
 

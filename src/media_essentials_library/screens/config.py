@@ -8,7 +8,7 @@ from textual.widgets import Button, Header, Input, Label, Select
 
 from media_essentials_library.config import load_config, save_config
 from media_essentials_library.formatting import DATE_FORMAT_OPTIONS
-from media_essentials_library.i18n import LANGUAGE_OPTIONS, t
+from media_essentials_library.i18n import get_language, get_language_options, t
 from media_essentials_library.models.config import PlexServerConfig
 from media_essentials_library.widgets.status_bar import StatusBar
 
@@ -73,19 +73,20 @@ class ConfigScreen(Screen[str]):
 
     def compose(self) -> ComposeResult:
         config = load_config()
+        language = get_language(config.language)
 
         yield Header()
-        yield StatusBar(language=config.language)
+        yield StatusBar(language=language)
         with Vertical(id="config-content"):
-            yield Label(t("config.title", config.language), id="config-title")
-            yield Label(t("config.language", config.language), id="language-label")
+            yield Label(t("config.title", language), id="config-title")
+            yield Label(t("config.language", language), id="language-label")
             yield Select(
-                [(label, value) for value, label in LANGUAGE_OPTIONS.items()],
-                value=config.language,
+                get_language_options(),
+                value=language,
                 allow_blank=False,
                 id="language",
             )
-            yield Label(t("config.date_format", config.language), id="date-format-label")
+            yield Label(t("config.date_format", language), id="date-format-label")
             yield Select(
                 [(label, value) for value, (label, _) in DATE_FORMAT_OPTIONS.items()],
                 value=config.date_format,
@@ -93,23 +94,23 @@ class ConfigScreen(Screen[str]):
                 id="date-format",
             )
             yield Label(
-                t("config.plex_server_settings", config.language),
+                t("config.plex_server_settings", language),
                 id="plex-server-settings-label",
             )
             yield Input(
                 config.server_url,
-                placeholder=t("config.plex_server_url_placeholder", config.language),
+                placeholder=t("config.plex_server_url_placeholder", language),
                 id="plex-url",
             )
             yield Input(
                 config.token,
-                placeholder=t("config.plex_token_placeholder", config.language),
+                placeholder=t("config.plex_token_placeholder", language),
                 password=True,
                 id="plex-token",
             )
             with Grid(id="config-actions"):
-                yield Button(t("action.save", config.language), id="save-settings")
-                yield Button(t("action.back", config.language), id="back")
+                yield Button(t("action.save", language), id="save-settings")
+                yield Button(t("action.back", language), id="back")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "back":

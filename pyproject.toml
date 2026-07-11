@@ -31,7 +31,7 @@ media-essentials-library = "media_essentials_library.__main__:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-media_essentials_library = ["assets/*.txt"]
+media_essentials_library = ["assets/*.txt", "locales/*.json"]
 
 [tool.ruff]
 line-length = 100

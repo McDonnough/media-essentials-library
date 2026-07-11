@@ -1,121 +1,160 @@
 from __future__ import annotations
 
+import json
+import re
+from dataclasses import dataclass, field
+from importlib.resources import files
+from pathlib import Path
+from typing import Any
+
+from media_essentials_library.paths import get_app_config_dir
+
 DEFAULT_LANGUAGE = "en"
+LOCALES_DIR_NAME = "locales"
+LOCALE_TAG_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]*$")
 
-LANGUAGE_OPTIONS = {
-    "en": "English",
-    "de": "Deutsch",
-}
 
-TRANSLATIONS = {
-    "en": {
-        "action.back": "Back",
-        "action.quit": "Quit",
-        "action.save": "Save",
-        "action.scan": "Scan",
-        "app.subtitle": "Media Essentials Library",
-        "config.date_format": "Date Format",
-        "config.language": "Language",
-        "config.plex_server_settings": "Plex Server Settings",
-        "config.plex_server_url_placeholder": "Plex server URL, e.g. http://localhost:32400",
-        "config.plex_token_placeholder": "Plex token",
-        "config.save_error": "Could not save Plex server settings: {error}",
-        "config.saved": "Plex server settings saved to ",
-        "config.title": "Media Essentials Library Settings",
-        "missing.airdate": "Airdate",
-        "missing.currently_scanning": "Currently scanning: {show_title}",
-        "missing.episode": "Episode",
-        "missing.episodes": "Episodes",
-        "missing.found_for_show": "Found {count} missing episodes for {show_title}.",
-        "missing.library": "Library",
-        "missing.load_libraries_error": "Could not load Plex libraries: {error}",
-        "missing.missing": "Missing",
-        "missing.no_selected_show": "Could not determine selected show.",
-        "missing.prepare_scan": "Preparing scan...",
-        "missing.scan_complete": "Scan complete. Found {count} shows with missing episodes.",
-        "missing.scan_error": "Could not scan library: {error}",
-        "missing.scanned_progress": "Scanned {scanned_count} of {total_shows} shows.",
-        "missing.select_library": "Select a library",
-        "missing.select_library_before_scan": "Select a library before scanning.",
-        "missing.scanning_library": "Scanning library: {library}",
-        "missing.season": "Season",
-        "missing.seasons": "Seasons",
-        "missing.shows": "Shows",
-        "missing.status": "Status",
-        "missing.title": "Missing Episodes Finder",
-        "missing.unaired": "Unaired",
-        "missing.year": "Year",
-        "start.missing_episode_finder": "Missing Episode Finder",
-        "start.settings": "Settings",
-        "start.tool_2": "Tool 2",
-        "start.tool_3": "Tool 3",
-        "start.welcome": (
-            "Welcome to Media Essentials Library! Please select a tool to get started."
-        ),
-        "status.ready": "Ready",
-        "table.episodes": "Episodes",
-        "table.title": "Title",
-    },
-    "de": {
-        "action.back": "Zurück",
-        "action.quit": "Beenden",
-        "action.save": "Speichern",
-        "action.scan": "Durchsuchen",
-        "app.subtitle": "Media Essentials Library",
-        "config.date_format": "Datumsformat",
-        "config.language": "Sprache",
-        "config.plex_server_settings": "Plex-Server-Einstellungen",
-        "config.plex_server_url_placeholder": "Plex-Server-URL, z. B. http://localhost:32400",
-        "config.plex_token_placeholder": "Plex-Token",
-        "config.save_error": "Plex-Server-Einstellungen konnten nicht gespeichert werden: {error}",
-        "config.saved": "Plex-Server-Einstellungen gespeichert unter ",
-        "config.title": "Media-Essentials-Library-Einstellungen",
-        "missing.airdate": "Ausstrahlungsdatum",
-        "missing.currently_scanning": "Aktuelle Suche: {show_title}",
-        "missing.episode": "Episode",
-        "missing.episodes": "Episoden",
-        "missing.found_for_show": "{count} fehlende Episoden für {show_title} gefunden.",
-        "missing.library": "Mediathek",
-        "missing.load_libraries_error": "Plex-Mediatheken konnten nicht geladen werden: {error}",
-        "missing.missing": "Fehlt",
-        "missing.no_selected_show": "Ausgewählte Serie konnte nicht ermittelt werden.",
-        "missing.prepare_scan": "Suche wird vorbereitet...",
-        "missing.scan_complete": (
-            "Suche abgeschlossen. {count} Serien mit fehlenden Episoden gefunden."
-        ),
-        "missing.scan_error": "Mediathek konnte nicht durchsucht werden: {error}",
-        "missing.scanned_progress": "{scanned_count} von {total_shows} Serien durchsucht.",
-        "missing.select_library": "Mediathek auswählen",
-        "missing.select_library_before_scan": "Wählen Sie vor dem Scannen eine Mediathek aus.",
-        "missing.scanning_library": "Mediathek wird durchsucht: {library}",
-        "missing.season": "Staffel",
-        "missing.seasons": "Staffeln",
-        "missing.shows": "Serien",
-        "missing.status": "Status",
-        "missing.title": "Finder für fehlende Episoden",
-        "missing.unaired": "Nicht ausgestrahlt",
-        "missing.year": "Jahr",
-        "start.missing_episode_finder": "Finder für fehlende Episoden",
-        "start.settings": "Einstellungen",
-        "start.tool_2": "Werkzeug 2",
-        "start.tool_3": "Werkzeug 3",
-        "start.welcome": "Willkommen bei Media Essentials Library! Wählen Sie ein Werkzeug aus.",
-        "status.ready": "Bereit",
-        "table.episodes": "Episoden",
-        "table.title": "Titel",
-    },
-}
+@dataclass
+class Locale:
+    language_name: str
+    fallback: str | None = None
+    translations: dict[str, str] = field(default_factory=dict)
+
+
+def get_external_locales_dir() -> Path:
+    return get_app_config_dir() / LOCALES_DIR_NAME
 
 
 def get_language(language: str | None) -> str:
-    if language in TRANSLATIONS:
-        return language
+    normalized_language = normalize_locale_tag(language)
+    if normalized_language in load_locales():
+        return normalized_language
     return DEFAULT_LANGUAGE
 
 
+def get_language_options() -> list[tuple[str, str]]:
+    locales = load_locales()
+    options = [
+        (locale.language_name, language)
+        for language, locale in locales.items()
+        if language != DEFAULT_LANGUAGE
+    ]
+    return [(locales[DEFAULT_LANGUAGE].language_name, DEFAULT_LANGUAGE), *sorted(options)]
+
+
 def t(key: str, language: str | None = None, **kwargs: object) -> str:
+    locales = load_locales()
     selected_language = get_language(language)
-    text = TRANSLATIONS[selected_language].get(key, TRANSLATIONS[DEFAULT_LANGUAGE][key])
+    text = find_translation(key, selected_language, locales)
     if kwargs:
         return text.format(**kwargs)
     return text
+
+
+def load_locales() -> dict[str, Locale]:
+    locales = load_bundled_locales()
+    external_locales_dir = get_external_locales_dir()
+    if external_locales_dir.exists():
+        merge_locale_files(locales, external_locales_dir.glob("*.json"))
+
+    if DEFAULT_LANGUAGE not in locales:
+        raise RuntimeError(f"Default locale {DEFAULT_LANGUAGE!r} is not available.")
+    return locales
+
+
+def load_bundled_locales() -> dict[str, Locale]:
+    locales: dict[str, Locale] = {}
+    bundled_locales = files("media_essentials_library").joinpath(LOCALES_DIR_NAME)
+    merge_locale_files(locales, bundled_locales.iterdir())
+    return locales
+
+
+def merge_locale_files(locales: dict[str, Locale], locale_files: Any) -> None:
+    for locale_file in locale_files:
+        locale_file_name = getattr(locale_file, "name", Path(str(locale_file)).name)
+        locale_path = Path(locale_file_name)
+        if locale_path.suffix != ".json":
+            continue
+
+        language = normalize_locale_tag(locale_path.stem)
+        if language is None:
+            continue
+
+        locale = parse_locale_file(locale_file)
+        if locale is None:
+            continue
+
+        existing_locale = locales.get(language)
+        if existing_locale is None:
+            locales[language] = locale
+            continue
+
+        if locale.language_name:
+            existing_locale.language_name = locale.language_name
+        if locale.fallback:
+            existing_locale.fallback = locale.fallback
+        existing_locale.translations.update(locale.translations)
+
+
+def parse_locale_file(locale_file: Any) -> Locale | None:
+    try:
+        data = json.loads(locale_file.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+    if not isinstance(data, dict):
+        return None
+
+    language_name = data.get("language_name")
+    translations = data.get("translations")
+    if not isinstance(language_name, str) or not isinstance(translations, dict):
+        return None
+
+    fallback = normalize_locale_tag(data.get("fallback"))
+    return Locale(
+        language_name=language_name,
+        fallback=fallback,
+        translations={
+            str(key): value
+            for key, value in translations.items()
+            if isinstance(value, str)
+        },
+    )
+
+
+def find_translation(key: str, language: str, locales: dict[str, Locale]) -> str:
+    for candidate_language in get_language_chain(language, locales):
+        locale = locales[candidate_language]
+        if key in locale.translations:
+            return locale.translations[key]
+    return key
+
+
+def get_language_chain(language: str, locales: dict[str, Locale]) -> list[str]:
+    chain = []
+    seen = set()
+    current_language: str | None = language
+
+    while current_language and current_language in locales and current_language not in seen:
+        chain.append(current_language)
+        seen.add(current_language)
+
+        fallback = locales[current_language].fallback
+        if fallback:
+            current_language = fallback
+        elif "-" in current_language:
+            current_language = current_language.rsplit("-", 1)[0]
+        else:
+            current_language = None
+
+    if DEFAULT_LANGUAGE not in seen:
+        chain.append(DEFAULT_LANGUAGE)
+    return chain
+
+
+def normalize_locale_tag(language: object) -> str | None:
+    if not isinstance(language, str) or not language:
+        return None
+    if not LOCALE_TAG_PATTERN.fullmatch(language):
+        return None
+    return language.replace("_", "-").lower()
