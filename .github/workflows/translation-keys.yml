@@ -1,0 +1,96 @@
+name: Translation keys
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  check-translation-keys:
+    name: Check translation keys
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compare locale translation keys
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          import sys
+          from pathlib import Path
+
+          locales_dir = Path("src/media_essentials_library/locales")
+          master_path = locales_dir / "en.json"
+
+          def load_translation_keys(path: Path) -> set[str]:
+              try:
+                  data = json.loads(path.read_text(encoding="utf-8"))
+              except json.JSONDecodeError as error:
+                  print(f"::error file={path}::Invalid JSON: {error}")
+                  raise
+
+              translations = data.get("translations")
+              if not isinstance(translations, dict):
+                  print(f"::error file={path}::Expected a translations object")
+                  raise ValueError(f"{path} has no translations object")
+
+              return set(translations)
+
+          if not master_path.exists():
+              print(f"::error file={master_path}::Master locale file is missing")
+              sys.exit(1)
+
+          try:
+              master_keys = load_translation_keys(master_path)
+          except (json.JSONDecodeError, ValueError):
+              sys.exit(1)
+
+          failed = False
+          locale_paths = sorted(locales_dir.glob("*.json"))
+          for locale_path in locale_paths:
+              if locale_path == master_path:
+                  continue
+
+              try:
+                  locale_keys = load_translation_keys(locale_path)
+              except (json.JSONDecodeError, ValueError):
+                  failed = True
+                  continue
+
+              missing_keys = sorted(master_keys - locale_keys)
+              extra_keys = sorted(locale_keys - master_keys)
+
+              if missing_keys:
+                  failed = True
+                  print(
+                      f"::error file={locale_path}::Missing translation keys: "
+                      + ", ".join(missing_keys)
+                  )
+
+              if extra_keys:
+                  failed = True
+                  print(
+                      f"::error file={locale_path}::Extra translation keys not in en.json: "
+                      + ", ".join(extra_keys)
+                  )
+
+          if failed:
+              sys.exit(1)
+
+          checked_count = len(locale_paths) - 1
+          print(
+              f"All {checked_count} locale file(s) match "
+              f"{master_path} ({len(master_keys)} translation keys)."
+          )
+          PY
