@@ -40,7 +40,7 @@ Each locale file must include a display name and a `translations` object:
 | --- | --- | --- | --- |
 | `language_name` | Yes | `"Schwiizerduetsch"` | Display name shown in the Settings language selector. |
 | `fallback` | No | `"de"` | Locale to use when this file does not define a translation key. |
-| `translations` | Yes | `{ "action.save": "Speichere" }` | Object containing app translation keys and their translated text. |
+| `translations` | Yes | `{ "action.save": "Speichere" }` | Translation keys and their translated text. |
 
 ## Build
 
