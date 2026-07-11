@@ -1,5 +1,11 @@
 # Media Essentials Library
 
+[![CI](https://github.com/McDonnough/media-essentials-library/actions/workflows/ci.yml/badge.svg)](https://github.com/McDonnough/media-essentials-library/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/McDonnough/media-essentials-library)](https://github.com/McDonnough/media-essentials-library/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](pyproject.toml)
+[![Code style: Ruff](https://img.shields.io/badge/code%20style-ruff-46a2f1.svg)](https://docs.astral.sh/ruff/)
+
 A terminal UI for media library administration tasks.
 
 Media Essentials Library is a keyboard-first toolbox for small, repeatable media-library
