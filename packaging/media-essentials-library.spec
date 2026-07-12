@@ -1,12 +1,19 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import tomllib
+from importlib.metadata import PackageNotFoundError
 from pathlib import Path
 
-from PyInstaller.utils.hooks import collect_submodules
+from PyInstaller.utils.hooks import collect_submodules, copy_metadata
 
 spec_path = Path(SPECPATH).resolve()
 project_root = spec_path if (spec_path / "src").exists() else spec_path.parent
 src_path = project_root / "src"
+generated_dir = project_root / "build" / "generated"
+generated_dir.mkdir(parents=True, exist_ok=True)
+version_file = generated_dir / "version.txt"
+project_metadata = tomllib.loads((project_root / "pyproject.toml").read_text(encoding="utf-8"))
+version_file.write_text(project_metadata["project"]["version"], encoding="utf-8")
 
 datas = [
     (
@@ -17,7 +24,15 @@ datas = [
         str(src_path / "media_essentials_library" / "locales"),
         "media_essentials_library/locales",
     ),
+    (
+        str(version_file),
+        "media_essentials_library",
+    ),
 ]
+try:
+    datas += copy_metadata("media-essentials-library")
+except PackageNotFoundError:
+    pass
 hiddenimports = collect_submodules("keyring.backends")
 
 a = Analysis(

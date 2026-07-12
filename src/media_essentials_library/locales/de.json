@@ -45,6 +45,7 @@
     "start.welcome": "Willkommen bei Media Essentials Library! Wählen Sie ein Werkzeug aus.",
     "status.ready": "Bereit",
     "table.episodes": "Episoden",
-    "table.title": "Titel"
+    "table.title": "Titel",
+    "update.hint": "Eine neue Version ist verfügbar: {version}"
   }
 }

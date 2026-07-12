@@ -116,7 +116,9 @@ class StartScreen(Screen[None]):
     def apply_language(self, language: str) -> None:
         self.language = language
         self.app.sub_title = t("app.subtitle", language)
-        self.query_one(StatusBar).set_message(t("status.ready", language))
+        status_bar = self.query_one(StatusBar)
+        status_bar.set_language(language)
+        status_bar.set_message(t("status.ready", language))
         self.query_one("#welcome-message", Label).update(t("start.welcome", language))
         self.query_one("#missing-episode-finder", Button).label = t(
             "start.missing_episode_finder",
