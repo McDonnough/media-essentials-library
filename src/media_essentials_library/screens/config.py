@@ -142,6 +142,7 @@ class ConfigScreen(Screen[str]):
 
     def apply_language(self, language: str) -> None:
         self.app.sub_title = t("app.subtitle", language)
+        self.query_one(StatusBar).set_language(language)
         self.query_one("#config-title", Label).update(t("config.title", language))
         self.query_one("#language-label", Label).update(t("config.language", language))
         self.query_one("#date-format-label", Label).update(t("config.date_format", language))
