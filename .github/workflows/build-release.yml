@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Validate release tag
         shell: pwsh
@@ -25,19 +27,10 @@ jobs:
             Write-Error "Release tag '$tag' is not a semantic version tag like v1.2.3."
           }
 
-          $pyproject = Get-Content pyproject.toml -Raw
-          if ($pyproject -notmatch '(?m)^version\s*=\s*"([^"]+)"') {
-            Write-Error "Could not read project version from pyproject.toml."
-          }
-
-          $projectVersion = $Matches[1]
           $tagVersion = $tag.Substring(1)
-          if ($projectVersion -ne $tagVersion) {
-            Write-Error "Tag version '$tagVersion' does not match pyproject.toml version '$projectVersion'."
-          }
 
           "RELEASE_TAG=$tag" >> $env:GITHUB_ENV
-          "RELEASE_VERSION=$projectVersion" >> $env:GITHUB_ENV
+          "RELEASE_VERSION=$tagVersion" >> $env:GITHUB_ENV
           "RELEASE_TITLE=Media Essentials Library $tag" >> $env:GITHUB_ENV
 
       - name: Set up Python
