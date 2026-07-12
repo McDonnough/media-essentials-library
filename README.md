@@ -172,8 +172,7 @@ dist\media-essentials-library.exe
 
 ### Release
 
-Releases are tag-driven. Update the project version in `pyproject.toml`, commit the change, then
-create and push a matching semantic version tag:
+Releases are tag-driven. Create and push a semantic version tag:
 
 ```powershell
 git tag v0.1.0
@@ -181,4 +180,5 @@ git push origin v0.1.0
 ```
 
 The GitHub workflow builds the Windows executable and creates a release only when a tag like
-`v1.2.3` is pushed. The tag version must match the `pyproject.toml` version.
+`v1.2.3` is pushed. The package version is resolved dynamically from Git tags during the
+release build, so the pushed tag is the release version source of truth.
