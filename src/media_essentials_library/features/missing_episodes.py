@@ -40,6 +40,7 @@ def find_missing_episodes(
                 title=expected_episode.title,
                 airdate=expected_episode.airdate,
                 is_unaired=expected_episode.airdate is None or expected_episode.airdate > today,
+                metadata_source=expected_episode.source,
             )
         )
 
@@ -65,6 +66,20 @@ def scan_library_for_missing_episodes(
         if not missing_episodes:
             continue
 
-        results.append(ShowMissingEpisodes(show=show, missing_episodes=missing_episodes))
+        metadata_source = next(
+            (
+                episode.metadata_source
+                for episode in missing_episodes
+                if episode.metadata_source
+            ),
+            None,
+        )
+        results.append(
+            ShowMissingEpisodes(
+                show=show,
+                missing_episodes=missing_episodes,
+                metadata_source=metadata_source,
+            )
+        )
 
     return results

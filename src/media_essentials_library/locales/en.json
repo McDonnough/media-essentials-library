@@ -20,6 +20,8 @@
     "missing.episodes": "Episodes",
     "missing.found_for_show": "Found {count} missing episodes for {show_title}.",
     "missing.library": "Library",
+    "missing.metadata_source": "Metadata source",
+    "missing.metadata_source_unavailable": "No metadata source is available for this show.",
     "missing.load_libraries_error": "Could not load Plex libraries: {error}",
     "missing.missing": "Missing",
     "missing.no_selected_show": "Could not determine selected show.",
