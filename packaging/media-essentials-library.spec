@@ -1,5 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import os
 import re
 import subprocess
 from importlib.metadata import PackageNotFoundError, version
@@ -8,9 +9,14 @@ from pathlib import Path
 from PyInstaller.utils.hooks import collect_submodules, copy_metadata
 
 PACKAGE_NAME = "media-essentials-library"
+VERSION_OVERRIDE_ENV = "MEL_BUILD_VERSION_OVERRIDE"
 
 
 def get_build_version(project_root):
+    version_override = os.environ.get(VERSION_OVERRIDE_ENV)
+    if version_override:
+        return version_override
+
     try:
         from setuptools_scm import get_version
 

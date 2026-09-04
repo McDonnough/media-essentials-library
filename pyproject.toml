@@ -11,6 +11,7 @@ requires-python = ">=3.11"
 authors = [{ name = "McDonnough" }]
 dependencies = [
     "keyring>=25",
+    "packaging>=24",
     "platformdirs>=4.3",
     # Uses a GitHub fork for now. Prefer a PyPI release or a pinned commit/tag before broad release.
     "plexapi @ git+https://github.com/pushingkarmaorg/python-plexapi.git",

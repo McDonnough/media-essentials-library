@@ -7,6 +7,8 @@ from importlib.resources import files
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from packaging.version import InvalidVersion, Version
+
 GITHUB_REPOSITORY = "McDonnough/media-essentials-library"
 LATEST_RELEASE_API_URL = f"https://api.github.com/repos/{GITHUB_REPOSITORY}/releases/latest"
 RELEASES_URL = f"https://github.com/{GITHUB_REPOSITORY}/releases"
@@ -92,25 +94,19 @@ def fetch_latest_release() -> ReleaseInfo | None:
 
 
 def is_newer_version(candidate: str, current: str) -> bool:
-    candidate_parts = parse_release_version(candidate)
-    current_parts = parse_release_version(current)
-    if candidate_parts is None or current_parts is None:
+    candidate_version = parse_release_version(candidate)
+    current_version = parse_release_version(current)
+    if candidate_version is None or current_version is None:
         return False
-    return candidate_parts > current_parts
+    return candidate_version > current_version
 
 
-def parse_release_version(value: str) -> tuple[int, int, int] | None:
+def parse_release_version(value: str) -> Version | None:
     version_value = value.strip()
     if version_value.startswith("v"):
         version_value = version_value[1:]
 
-    core_version = version_value.split("-", 1)[0]
-    parts = core_version.split(".")
-    if not 1 <= len(parts) <= 3:
+    try:
+        return Version(version_value)
+    except InvalidVersion:
         return None
-    if any(not part.isdecimal() for part in parts):
-        return None
-
-    padded_parts = [int(part) for part in parts]
-    padded_parts.extend([0] * (3 - len(padded_parts)))
-    return tuple(padded_parts)

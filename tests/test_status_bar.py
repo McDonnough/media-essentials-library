@@ -31,6 +31,7 @@ def test_update_hint_opens_release_page_from_status_bar():
         async with app.run_test(size=(120, 40)) as pilot:
             await pilot.pause()
             status_bar = app.screen.query_one(StatusBar)
+            status_bar.set_current_version("0.0.1")
             status_bar.set_update_info(
                 UpdateInfo(
                     current_version="0.0.1",
@@ -42,11 +43,53 @@ def test_update_hint_opens_release_page_from_status_bar():
             await pilot.pause()
 
             assert "v0.1.0" in str(status_bar.render())
-            assert status_bar.update_start_column is not None
+            assert status_bar.version_start_column is not None
+            assert status_bar.version_end_column is not None
 
-            await pilot.click(status_bar, offset=(status_bar.size.width - 3, 0))
+            await pilot.click(status_bar, offset=(status_bar.version_start_column, 0))
 
         assert app.opened_url == "https://example.test/releases/v0.1.0"
+
+    asyncio.run(run_test())
+
+
+def test_status_bar_shows_current_version_when_no_update_exists():
+    async def run_test() -> None:
+        app = StatusBarTestApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause()
+            status_bar = app.screen.query_one(StatusBar)
+            status_bar.set_current_version("0.1.0")
+
+            await pilot.pause()
+
+            assert "Version: 0.1.0" in str(status_bar.render())
+            assert status_bar.version_start_column is None
+            assert status_bar.version_end_column is None
+
+    asyncio.run(run_test())
+
+
+def test_update_hint_only_underlines_version_number():
+    async def run_test() -> None:
+        app = StatusBarTestApp()
+        async with app.run_test(size=(120, 40)) as pilot:
+            await pilot.pause()
+            status_bar = app.screen.query_one(StatusBar)
+            status_bar.set_update_info(
+                UpdateInfo(
+                    current_version="0.0.1",
+                    latest_version="v0.1.0",
+                    url="https://example.test/releases/v0.1.0",
+                )
+            )
+
+            version_text = status_bar.build_version_text()
+
+            assert version_text.plain == "New version: v0.1.0"
+            assert len(version_text.spans) == 1
+            assert version_text.spans[0].start == len("New version: ")
+            assert version_text.spans[0].end == len("New version: v0.1.0")
 
     asyncio.run(run_test())
 

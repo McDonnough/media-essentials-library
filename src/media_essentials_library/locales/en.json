@@ -45,6 +45,7 @@
     "status.ready": "Ready",
     "table.episodes": "Episodes",
     "table.title": "Title",
-    "update.hint": "A new version is available: {version}"
+    "update.hint_prefix": "A new version is available: ",
+    "version.current": "Version: {version}"
   }
 }
