@@ -152,12 +152,15 @@ class MissingEpisodesScreen(Screen[None]):
                         id="shows-title",
                         classes="table-title",
                     )
-                    shows_table = DataTable(id="shows-table", zebra_stripes=True, cursor_type="row")
-                    shows_table.add_columns(
-                        t("table.title", self.language),
-                        t("missing.year", self.language),
-                        t("missing.seasons", self.language),
-                        t("table.episodes", self.language),
+                    shows_table = DataTable(
+                        id="shows-table", zebra_stripes=True, cursor_type="cell"
+                    )
+                    shows_table.add_column(t("table.title", self.language), key="title")
+                    shows_table.add_column(t("missing.year", self.language), key="year")
+                    shows_table.add_column(t("missing.seasons", self.language), key="seasons")
+                    shows_table.add_column(t("table.episodes", self.language), key="episodes")
+                    shows_table.add_column(
+                        t("missing.metadata_source", self.language), key="metadata-source"
                     )
                     yield shows_table
                 with Vertical(classes="table-section"):
@@ -201,6 +204,17 @@ class MissingEpisodesScreen(Screen[None]):
         self.load_show_episodes(str(event.row_key.value))
 
     def on_data_table_cell_selected(self, event: DataTable.CellSelected) -> None:
+        if event.data_table.id != "shows-table":
+            return
+
+        show_key = str(event.cell_key.row_key.value)
+        if str(event.cell_key.column_key.value) == "metadata-source":
+            self.open_metadata_source(show_key)
+            return
+
+        self.load_show_episodes(show_key)
+
+    def on_data_table_cell_highlighted(self, event: DataTable.CellHighlighted) -> None:
         if event.data_table.id != "shows-table":
             return
 
@@ -273,6 +287,9 @@ class MissingEpisodesScreen(Screen[None]):
                 "" if show.year is None else str(show.year),
                 str(show.season_count),
                 str(show.episode_count),
+                Text(result.metadata_source.name, style="blue underline")
+                if result.metadata_source
+                else "",
                 key=show.key,
             )
 
@@ -340,3 +357,13 @@ class MissingEpisodesScreen(Screen[None]):
                 show_title=result.show.title,
             )
         )
+
+    def open_metadata_source(self, show_key: str) -> None:
+        result = self.results_by_show_key.get(show_key)
+        if result is None or result.metadata_source is None:
+            self.query_one(StatusBar).set_message(
+                t("missing.metadata_source_unavailable", self.language)
+            )
+            return
+
+        self.app.open_url(result.metadata_source.url)

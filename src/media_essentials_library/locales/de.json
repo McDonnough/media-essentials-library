@@ -21,6 +21,8 @@
     "missing.episodes": "Episoden",
     "missing.found_for_show": "{count} fehlende Episoden für {show_title} gefunden.",
     "missing.library": "Mediathek",
+    "missing.metadata_source": "Metadatenquelle",
+    "missing.metadata_source_unavailable": "Für diese Serie ist keine Metadatenquelle verfügbar.",
     "missing.load_libraries_error": "Plex-Mediatheken konnten nicht geladen werden: {error}",
     "missing.missing": "Fehlt",
     "missing.no_selected_show": "Ausgewählte Serie konnte nicht ermittelt werden.",

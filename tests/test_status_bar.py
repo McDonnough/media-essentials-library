@@ -86,10 +86,10 @@ def test_update_hint_only_underlines_version_number():
 
             version_text = status_bar.build_version_text()
 
-            assert version_text.plain == "New version: v0.1.0"
+            assert version_text.plain == "A new version is available: v0.1.0"
             assert len(version_text.spans) == 1
-            assert version_text.spans[0].start == len("New version: ")
-            assert version_text.spans[0].end == len("New version: v0.1.0")
+            assert version_text.spans[0].start == len("A new version is available: ")
+            assert version_text.spans[0].end == len("A new version is available: v0.1.0")
 
     asyncio.run(run_test())
 

@@ -9,7 +9,7 @@ from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
-from media_essentials_library.models.metadata import MetadataEpisode
+from media_essentials_library.models.metadata import MetadataEpisode, MetadataSource
 
 TVMAZE_API_BASE_URL = "https://api.tvmaze.com"
 TVMAZE_MAX_RETRIES = 4
@@ -48,7 +48,9 @@ def _fetch_expected_episodes(show_title: str) -> list[MetadataEpisode]:
         data = json.load(response)
 
     episodes = data.get("_embedded", {}).get("episodes", [])
-    return [_parse_tvmaze_episode(episode) for episode in episodes]
+    show_url = data.get("url")
+    source = MetadataSource("TVMaze", show_url) if show_url else None
+    return [_parse_tvmaze_episode(episode, source) for episode in episodes]
 
 
 def _wait_for_tvmaze_slot() -> None:
@@ -63,7 +65,9 @@ def _wait_for_tvmaze_slot() -> None:
         _last_tvmaze_request_at = time.monotonic()
 
 
-def _parse_tvmaze_episode(episode: dict) -> MetadataEpisode:
+def _parse_tvmaze_episode(
+    episode: dict, source: MetadataSource | None = None
+) -> MetadataEpisode:
     airdate = _parse_airdate(episode.get("airdate"))
     return MetadataEpisode(
         key=str(episode.get("id", "")),
@@ -71,6 +75,7 @@ def _parse_tvmaze_episode(episode: dict) -> MetadataEpisode:
         episode_number=episode.get("number"),
         title=str(episode.get("name") or ""),
         airdate=airdate,
+        source=source,
     )
 
 
