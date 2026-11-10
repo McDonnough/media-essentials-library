@@ -19,6 +19,7 @@ usable, but the feature set is intentionally small:
 
 - run focused media-library checks from a terminal UI
 - find missing episodes in a TV library
+- compare movie or TV libraries on two Plex servers for duplicates
 - save non-secret preferences such as date format and language
 - switch between bundled English and German translations
 - load custom external translations
@@ -42,6 +43,18 @@ To use it, configure:
 
 The app can then connect to the configured Plex server, list TV libraries and shows, and scan a
 selected library for missing episodes.
+
+### Duplicate Finder
+
+Duplicate Finder compares one movie or TV library from each of two Plex servers. It matches
+items using shared provider IDs (such as IMDb, TMDB, or TVDB IDs) when Plex supplies them, with an
+exact normalized title, release year, and media-type fallback. Requiring the year on fallback avoids
+flagging remakes and unrelated shows or movies that reuse a title.
+
+When the screen opens, the app uses your saved Plex token to ask plex.tv for the servers accessible
+to your account and preloads their libraries. You then select two owned or shared servers and one
+library from each. Each connection uses the server-specific access token and connection addresses
+returned by Plex. You do not need—and should not request—the other server owner's token.
 
 Do not paste Plex tokens into bug reports, screenshots, logs, commits, or pull requests. If a token is
 accidentally exposed, revoke or rotate it before sharing anything publicly.

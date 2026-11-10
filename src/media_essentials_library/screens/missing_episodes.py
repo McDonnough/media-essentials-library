@@ -253,7 +253,13 @@ class MissingEpisodesScreen(Screen[None]):
 
         self.scan_library_worker(str(selected_library))
 
-    @work(name="missing-episodes-scan", group="missing-episodes-scan", thread=True, exclusive=True)
+    @work(
+        name="missing-episodes-scan",
+        group="missing-episodes-scan",
+        thread=True,
+        exclusive=True,
+        exit_on_error=False,
+    )
     def scan_library_worker(self, library_key: str) -> list[ShowMissingEpisodes]:
         return scan_library_for_missing_episodes(
             library_key,
