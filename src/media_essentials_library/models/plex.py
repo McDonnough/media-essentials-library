@@ -5,6 +5,24 @@ from dataclasses import dataclass
 class PlexLibrary:
     key: str
     title: str
+    media_type: str = "show"
+
+
+@dataclass(frozen=True)
+class PlexMediaItem:
+    key: str
+    title: str
+    year: int | None
+    media_type: str
+    guids: tuple[str, ...] = ()
+    web_url: str = ""
+
+
+@dataclass(frozen=True)
+class PlexServerResource:
+    key: str
+    title: str
+    owned: bool
 
 
 @dataclass(frozen=True)

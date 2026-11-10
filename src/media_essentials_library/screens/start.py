@@ -9,6 +9,7 @@ from textual.widgets import Button, Header, Label, Static
 from media_essentials_library.config import load_config
 from media_essentials_library.i18n import t
 from media_essentials_library.screens.config import ConfigScreen
+from media_essentials_library.screens.library_comparison import LibraryComparisonScreen
 from media_essentials_library.screens.missing_episodes import MissingEpisodesScreen
 from media_essentials_library.widgets.status_bar import StatusBar
 
@@ -88,10 +89,8 @@ class StartScreen(Screen[None]):
                     id="missing-episode-finder",
                 )
                 yield Button(
-                    t("start.tool_2", self.language),
-                    id="tool-2",
-                    classes="inactive",
-                    disabled=True,
+                    t("start.library_comparison", self.language),
+                    id="library-comparison",
                 )
                 yield Button(
                     t("start.tool_3", self.language),
@@ -106,6 +105,8 @@ class StartScreen(Screen[None]):
             self.app.push_screen(ConfigScreen(), self.apply_selected_language)
         elif event.button.id == "missing-episode-finder":
             self.app.push_screen(MissingEpisodesScreen())
+        elif event.button.id == "library-comparison":
+            self.app.push_screen(LibraryComparisonScreen())
 
     def apply_selected_language(self, language: str | None) -> None:
         if language is None or language == self.language:
@@ -124,6 +125,8 @@ class StartScreen(Screen[None]):
             "start.missing_episode_finder",
             language,
         )
-        self.query_one("#tool-2", Button).label = t("start.tool_2", language)
+        self.query_one("#library-comparison", Button).label = t(
+            "start.library_comparison", language
+        )
         self.query_one("#tool-3", Button).label = t("start.tool_3", language)
         self.query_one("#settings", Button).label = t("start.settings", language)
